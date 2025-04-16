@@ -26,3 +26,23 @@ output "resources" {
   value = local.output_resources
 }
 */
+
+output "resource_group_name" {
+  value = azurerm_resource_group.ws.name
+}
+
+output "resource_group_location" {
+  value = azurerm_resource_group.ws.name
+}
+
+output "subnet_default_id" {
+  value = azurerm_subnet.ws_default.id
+}
+
+output "virtual_network_name" {
+  value = azurerm_virtual_network.ws.name
+}
+
+output "virtual_network_id" {
+  value = azurerm_virtual_network.ws.id
+}

@@ -22,6 +22,40 @@ def graph(tmp_path):
     return DependencyGraph().from_library(str(tmp_path))
 
 
+def test_graph_addition(graph):
+    g1 = DependencyGraph() + graph
+
+    # g1 should now contain graph's nodes and edges
+    assert set(g1.nodes) == set(graph.nodes)
+    assert set(g1.edges) == set(graph.edges)
+
+
+def test_graph_subtraction(graph):
+    # Subtracting some nodes from the graph should remove them and the respective edges
+    g1 = graph - DependencyGraph().from_nodes({"A", "B"})
+    # g1 should not contain A and B
+    assert set(g1.nodes) == {"C", "C/D"}
+    assert set(g1.edges) == {("C", "C/D")}
+
+    # Two equal graphs should result in an empty graph
+    g2 = graph.copy() - graph
+    # g2 should be empty
+    assert set(g2.nodes) == set()
+    assert set(g2.edges) == set()
+
+    # Subtracting to an empty graph should have no effect
+    g3 = DependencyGraph() - graph
+    # g should be empty
+    assert set(g3.nodes) == set()
+    assert set(g3.edges) == set()
+
+    # Subtracting an empty graph should have no effect
+    g4 = graph - DependencyGraph()
+    # g4 should be the same as graph
+    assert set(g4.nodes) == set(graph.nodes)
+    assert set(g4.edges) == set(graph.edges)
+
+
 def test_dependency_graph_ignores_line_comments(graph):
     # Assertions
     assert isinstance(graph, DependencyGraph)

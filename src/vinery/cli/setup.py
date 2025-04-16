@@ -1,24 +1,24 @@
-from vinery.io import DIRECTORIES, setup_directories, set_log_level, setup_library, echo
+from vinery.dependency_graph import DependencyGraph
+from vinery.io import DIRECTORIES, setup_directories, setup_library, echo
 import os
 
 
-def setup(log_level: str, path_to_library: str):
+def setup(ctx, path_to_library: str, directories: str = DIRECTORIES) -> None:
     """
     Set up the vinery CLI.
     """
-    if all([os.path.isdir(dir) for dir in DIRECTORIES.values()]):
+    if all([os.path.isdir(dir) for dir in directories.values()]):
         echo(f"Working directories already exist.", log_level="DEBUG")
     else:
-        setup_directories()
+        setup_directories(directories=directories)
         echo("Working directories created successfully.", log_level="INFO")
-
-    set_log_level(log_level)
 
     if os.path.isdir(f"{path_to_library}/default"):
         echo(f"Library already exists at {path_to_library}.", log_level="DEBUG")
     else:
-        setup_library(path_to_library)
+        try:
+            setup_library(path_to_library)
+        except FileNotFoundError as e:
+            echo(str(e), log_level="ERROR")
+            ctx.exit(1)
         echo(f"Library plans copied to {path_to_library}.", log_level="INFO")
-
-    echo(f"--log-level: {log_level}", log_level="DEBUG")
-    echo(f"--path-to-library: {path_to_library}", log_level="DEBUG")

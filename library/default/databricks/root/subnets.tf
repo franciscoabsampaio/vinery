@@ -1,11 +1,7 @@
-
-
-resource "azurerm_subnet" "env_public_databricks" {
-  for_each = var.environments
-
-  name                 = "${local.prefix}-${each.key}-subnet_public_databricks"
-  virtual_network_name = azurerm_virtual_network.env[each.key].name
-  resource_group_name  = azurerm_resource_group.env[each.key].name
+resource "azurerm_subnet" "ws_public_databricks" {
+  name                 = "${local.prefix}-subnet_public_databricks"
+  virtual_network_name = var.virtual_network_name
+  resource_group_name  = var.resource_group_name
   address_prefixes     = ["10.0.2.0/24"]
 
   delegation {
@@ -22,12 +18,10 @@ resource "azurerm_subnet" "env_public_databricks" {
   }
 }
 
-resource "azurerm_subnet" "env_private_databricks" {
-  for_each = var.environments
-
-  name                 = "${local.prefix}-${each.key}-subnet_private_databricks"
-  virtual_network_name = azurerm_virtual_network.env[each.key].name
-  resource_group_name  = azurerm_resource_group.env[each.key].name
+resource "azurerm_subnet" "ws_private_databricks" {
+  name                 = "${local.prefix}-subnet_private_databricks"
+  virtual_network_name = var.virtual_network_name
+  resource_group_name  = var.resource_group_name
   address_prefixes     = ["10.0.3.0/24"]
 
   default_outbound_access_enabled = false
@@ -46,24 +40,18 @@ resource "azurerm_subnet" "env_private_databricks" {
   }
 }
 
-resource "azurerm_network_security_group" "env_databricks" {
-  for_each = var.environments
-
-  name                = "${local.prefix}-${each.key}-nsg_databricks"
-  location            = azurerm_resource_group.env[each.key].location
-  resource_group_name = azurerm_resource_group.env[each.key].name
+resource "azurerm_network_security_group" "ws_databricks" {
+  name                = "${local.prefix}-nsg_databricks"
+  location            = var.resource_group_location
+  resource_group_name = var.resource_group_name
 }
 
-resource "azurerm_subnet_network_security_group_association" "env_public_databricks" {
-  for_each = var.environments
-
-  subnet_id                 = azurerm_subnet.env_public_databricks[each.key].id
-  network_security_group_id = azurerm_network_security_group.env_databricks[each.key].id
+resource "azurerm_subnet_network_security_group_association" "ws_public_databricks" {
+  subnet_id                 = azurerm_subnet.ws_public_databricks.id
+  network_security_group_id = azurerm_network_security_group.ws_databricks.id
 }
 
-resource "azurerm_subnet_network_security_group_association" "env_private_databricks" {
-  for_each = var.environments
-
-  subnet_id                 = azurerm_subnet.env_private_databricks[each.key].id
-  network_security_group_id = azurerm_network_security_group.env_databricks[each.key].id
+resource "azurerm_subnet_network_security_group_association" "ws_private_databricks" {
+  subnet_id                 = azurerm_subnet.ws_private_databricks.id
+  network_security_group_id = azurerm_network_security_group.ws_databricks.id
 }

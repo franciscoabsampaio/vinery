@@ -1,33 +1,49 @@
+from __future__ import annotations
 from collections import deque
 import matplotlib.pyplot as plt
 import networkx as nx
 import os
-from typing import Self
-from vinery.io import DIRECTORIES, echo
+from vinery.io import DIRECTORIES, echo, read_deps_conf
 
 
 class DependencyGraph(nx.DiGraph):
-    def from_library(self, path_to_library: str) -> Self:
+    def __add__(self, other: DependencyGraph) -> DependencyGraph:
+        """
+        Adds nodes and edges from another graph.
+        """
+        new = self.copy()
+        new.add_nodes_from(other.nodes)
+        new.add_edges_from(other.edges)
+        return new
+    
+
+    def __sub__(self, other: DependencyGraph) -> DependencyGraph:
+        """
+        Subtracts nodes and edges from the current graph.
+        """
+        new = self.copy()
+        new.remove_nodes_from(other.nodes)
+        new.remove_edges_from(other.edges)
+        return new
+
+
+    def from_library(self, path_to_library: str) -> DependencyGraph:
         """
         Scans all subfolders in the path_to_library directory and builds a dependency graph.
+        Folders MUST contain a file named '_deps.conf' with a list of dependencies.
         """
         for (root, _, files) in os.walk(path_to_library, topdown=True):
             if "_deps.conf" in files:
                 plan_name = root.split(path_to_library)[-1].strip("/")
                 self.add_node(plan_name)
 
-                with open(f"{root}/_deps.conf", "r") as f:
-                    dependencies = [line.strip().strip("/") for line in f if (
-                        line.strip().strip("/")
-                        and not line.startswith("#")  # Ignore comments
-                    )]
-                    for dependency in dependencies:
-                        self.add_edge(dependency, plan_name)
+                for dependency in read_deps_conf(root):
+                    self.add_edge(dependency, plan_name)
         
         return self
-    
 
-    def from_node(self, node: str) -> Self:
+
+    def from_node(self, node: str) -> DependencyGraph:
         """
         Function to create a new DependencyGraph object from a single node.
         """
@@ -35,7 +51,7 @@ class DependencyGraph(nx.DiGraph):
         return self
 
 
-    def from_nodes(self, nodes: set[str]) -> Self:
+    def from_nodes(self, nodes: set[str]) -> DependencyGraph:
         """
         Function to create a new DependencyGraph object from a single node.
         """
@@ -43,7 +59,7 @@ class DependencyGraph(nx.DiGraph):
         return self
     
     
-    def wsubgraph(self, nodes: set[str]) -> Self:
+    def wsubgraph(self, nodes: set[str]) -> DependencyGraph:
         """
         'w' stands for writable.
         Whereas subgraph() creates a Graph view,
@@ -58,7 +74,7 @@ class DependencyGraph(nx.DiGraph):
         return wsubgraph
     
 
-    def find_all_dependencies(self, node: str, visited=None) -> set:
+    def find_all_dependencies(self, node: str, visited: set = None) -> set:
         """
         Utility function to find all dependencies (parent nodes) recursively
         """
@@ -77,7 +93,7 @@ class DependencyGraph(nx.DiGraph):
         return visited
     
 
-    def from_nodes_wsubgraph(self, nodes: tuple[str]) -> Self:
+    def from_nodes_wsubgraph(self, nodes: tuple[str]) -> DependencyGraph:
         """
         Function to create a new DependencyGraph object from a subgraph,
         given any number of nodes - which the wsubgraph must include.
@@ -100,26 +116,6 @@ class DependencyGraph(nx.DiGraph):
 
         echo(f"graph.png was saved to {target_directory}.", log_level="INFO")
 
-
-    def subtract(self, other: Self) -> Self:
-        """
-        Subtracts nodes and edges from the current graph.
-        """
-        self.remove_nodes_from(other.nodes)
-        self.remove_edges_from(other.edges)
-        
-        return self
-    
-
-    def add(self, other: Self) -> Self:
-        """
-        Adds nodes and edges from another graph.
-        """
-        self.add_nodes_from(other.nodes)
-        self.add_edges_from(other.edges)
-        
-        return self
-    
 
     def sorted_list(self, reverse: bool = False) -> list[str]:
         """

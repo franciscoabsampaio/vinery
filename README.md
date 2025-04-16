@@ -6,6 +6,11 @@
    </a>
 </p>
 
+[![PyPI](https://img.shields.io/pypi/v/vinery)](https://pypi.org/project/vinery/)
+[![Supported Python
+versions](https://img.shields.io/pypi/pyversions/vinery.svg)](https://pypi.org/project/vinery/)
+[![check](https://github.com/franciscoabsampaio/vineyard/actions/workflows/test.yaml/badge.svg?branch=)](https://github.com/franciscoabsampaio/vineyard/actions/workflows/test.yaml)
+
 **`vinery`** is the **simple, **batteries-included** [infrastructure-as-code](https://www.hashicorp.com/en/resources/what-is-infrastructure-as-code)** framework that leverages **opinionated, plug-and-play Terraform/OpenTofu
 plans** to programmatically generate **data and analytics infrastructure** in Azure.
 
@@ -25,7 +30,7 @@ plans** to programmatically generate **data and analytics infrastructure** in Az
 
 ✅ For repeatable deployments, across many tenants!
 
-**`vinery` comes in two parts:**
+### `vinery` comes in two parts
 
 - A [**library**](https://github.com/franciscoabsampaio/vineyard/blob/main/docs/library.md) 📚 of plans for managing Azure infrastructure for data and analytics, that is:
 
@@ -42,7 +47,7 @@ Simply choose which components to include from the library - **vine** determines
 
 The **vine** CLI expects [OpenTofu CLI](https://opentofu.org/docs/intro/install/)/[Terraform CLI](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli), as well as [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) to be installed.
 
-**`vinery`** expects no different settings or configurations than how you would normally configure the Azure provider. However, our default plans **do not** support inline configuration of provider credentials, since we don't recommend it ourselves.
+**`vinery`** expects no different settings or configurations than how you would normally configure the Azure provider. However, our default plans **do not** support inline configuration of provider credentials out-of-the-box, since we don't recommend it ourselves.
 
 ### Install `vinery`
 

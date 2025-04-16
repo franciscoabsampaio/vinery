@@ -6,7 +6,8 @@ resource "azurerm_virtual_network" "ws" {
   dns_servers         = ["10.0.0.4", "10.0.0.5"]
 
   tags = {
-    Environment = each.key
+    Environment = terraform.workspace
+    Project = var.project
   }
 }
 

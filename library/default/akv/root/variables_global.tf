@@ -3,3 +3,7 @@ variable "global" {
     region = string
   })
 }
+
+variable "project" {
+  type = string
+}

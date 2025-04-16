@@ -1,57 +1,53 @@
-locals {
-  map_of_storage_accounts = { for k, v in local.map_of_resources :
-    k => v
-    if split("-", k)[0] == "adls"
-  }
+provider "azurerm" {
+  features {}
+}
 
-  map_of_containers = {
-    for container_details in flatten([
-      for k, v in local.map_of_storage_accounts : [
-        for container in v.containers :
-        {
-          key      = "${k}-${container}",
-          name     = container,
-          adls_key = k
-        }
-      ] if v.create_new
-    ]) : container_details.key => container_details
-  }
+locals {
+  prefix = "${var.project}-${terraform.workspace}"
 }
 
 // Create new storage accounts
-// "env_name" -> per "environment" and "name"
-resource "azurerm_storage_account" "env_name" {
-  for_each = { for k, v in local.map_of_storage_accounts : k => v if v.create_new }
+resource "azurerm_storage_account" "ws_account" {
+  for_each = { for k, v in var.accounts : k => v if v.create_new }
 
-  name                     = "${local.prefix}${each.value.environment}adls"
-  resource_group_name      = azurerm_resource_group.env[each.value.environment].name
-  location                 = azurerm_resource_group.env[each.value.environment].location
+  name                     = "${local.prefix}-adls"
+  resource_group_name      = var.resource_group_name
+  location                 = var.resource_group_location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 // and respective containers
-resource "azurerm_storage_container" "env_name_container" {
-  for_each = local.map_of_containers
+resource "azurerm_storage_container" "ws_account_container" {
+  for_each = merge([
+    for account, details in var.accounts : {
+      for container in details.containers :
+      "${account}-${container}" => {
+        storage_account_name = azurerm_storage_account.ws_account[account].name
+        container_name       = container
+        is_private           = details.is_private
+      }
+    } if details.create_new
+  ]...)
 
-  name                  = each.value.name
-  storage_account_id    = azurerm_storage_account.env_name[each.value.adls_key].id
-  container_access_type = "private"
+  name                  = each.value.container_name
+  storage_account_id    = azurerm_storage_account.ws[each.value.adls_key].id
+  container_access_type = "private" ? each.value.is_private : "blob"
 }
 
 // If a storage account already exists, and resides in its own private network
 // Create a private endpoint from the default subnet to it
 resource "azurerm_private_endpoint" "adls" {
-  for_each = { for k, v in local.map_of_storage_accounts : k => v if !v.create_new && v.is_private }
+  for_each = { for k, v in var.accounts : k => v if !v.create_new && v.is_private }
 
-  name                = "${local.prefix}-${each.value.environment}-pe_adls_${each.value.name}"
-  location            = azurerm_resource_group.env[each.value.environment].location
-  resource_group_name = azurerm_resource_group.env[each.value.environment].name
+  name                = "${local.prefix}-pe-adls_${each.key}"
+  location            = var.resource_group_location
+  resource_group_name = var.resource_group_name
 
-  subnet_id = azurerm_subnet.env_default[each.value.environment].id
+  subnet_id = var.subnet_default_id
 
   private_service_connection {
-    name                           = "${local.prefix}-${each.value.environment}-psc_adls_${each.value.name}"
-    private_connection_resource_id = "${var.subscription_id}/${each.value.resource_id}"
+    name                           = "${local.prefix}-psc-adls_${each.key}"
+    private_connection_resource_id = each.value.resource_id
     is_manual_connection           = false
     subresource_names              = ["blob"]
   }

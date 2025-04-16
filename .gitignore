@@ -3,6 +3,7 @@ outputs/
 outputs/*
 **/outputs/
 **/outputs/*
+**/output.json
 
 # .env
 .env
@@ -18,6 +19,7 @@ env*/
 __pycache__/
 .pytest_cache/
 build/
+vinery-*/
 dist/
 .coverage*
 htmlcov/
